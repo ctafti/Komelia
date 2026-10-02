@@ -10,6 +10,7 @@ import snd.komelia.settings.model.LayoutScaleType
 import snd.komelia.settings.model.PageDisplayLayout
 import snd.komelia.settings.model.PagedReadingDirection
 import snd.komelia.settings.model.ReaderFlashColor
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.settings.model.ReaderType
 import snd.komelia.settings.model.ReaderType.PAGED
 
@@ -34,6 +35,7 @@ data class ImageReaderSettings(
     val upsamplingMode: UpsamplingMode = UpsamplingMode.CATMULL_ROM,
     val loadThumbnailPreviews: Boolean = true,
     val volumeKeysNavigation: Boolean = false,
+    val swipeActions: ReaderSwipeActions = ReaderSwipeActions(),
 
     val ortUpscalerMode: UpscaleMode = UpscaleMode.NONE,
     val ortUpscalerUserModelPath: PlatformFile? = null,

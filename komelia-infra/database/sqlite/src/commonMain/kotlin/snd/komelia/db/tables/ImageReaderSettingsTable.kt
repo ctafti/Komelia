@@ -33,6 +33,13 @@ object ImageReaderSettingsTable : Table("ImageReaderSettings") {
     val ortUpscalerMode = text("onnx_runtime_mode")
     val ortUpscalerTileSize = integer("onnx_runtime_tile_size")
     val ortUpscalerUserModelPath = text("onnx_runtime_model_path").nullable()
+    val swipeLeft = text("swipe_left")
+    val swipeRight = text("swipe_right")
+    val swipeUp = text("swipe_up")
+    val swipeDown = text("swipe_down")
+
+    /** JSON list of [snd.komelia.settings.model.LearnedRemoteButton] */
+    val learnedRemoteButtons = text("learned_remote_buttons")
 
     override val primaryKey = PrimaryKey(bookId)
 }

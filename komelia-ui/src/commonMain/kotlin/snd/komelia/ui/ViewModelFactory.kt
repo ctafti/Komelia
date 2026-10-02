@@ -653,6 +653,7 @@ class ViewModelFactory(
             windowState = dependencies.windowState,
             platformType = platformType,
             bookSiblingsContext = bookSiblingsContext,
+            imageReaderSettingsRepository = appRepositories.imageReaderSettingsRepository,
         )
     }
 

@@ -30,11 +30,14 @@ import snd.komelia.settings.model.PageDisplayLayout.SINGLE_PAGE
 import snd.komelia.settings.model.PagedReadingDirection
 import snd.komelia.settings.model.PagedReadingDirection.LEFT_TO_RIGHT
 import snd.komelia.settings.model.PagedReadingDirection.RIGHT_TO_LEFT
+import snd.komelia.settings.model.ReaderSwipeAction
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.ui.reader.image.ScreenScaleState
 import snd.komelia.ui.reader.image.common.PagedReaderHelpDialog
 import snd.komelia.ui.reader.image.common.ReaderControlsOverlay
 import snd.komelia.ui.reader.image.common.ReaderImageContent
 import snd.komelia.ui.reader.image.common.ScalableContainer
+import snd.komelia.ui.reader.image.common.readerSwipeGestures
 import snd.komelia.ui.reader.image.paged.PagedReaderState.Page
 import snd.komelia.ui.reader.image.paged.PagedReaderState.TransitionPage
 import snd.komelia.ui.reader.image.paged.PagedReaderState.TransitionPage.BookEnd
@@ -48,7 +51,8 @@ fun BoxScope.PagedReaderContent(
     onShowSettingsMenuChange: (Boolean) -> Unit,
     screenScaleState: ScreenScaleState,
     pagedReaderState: PagedReaderState,
-    volumeKeysNavigation: Boolean
+    volumeKeysNavigation: Boolean,
+    swipeActions: ReaderSwipeActions = ReaderSwipeActions(),
 ) {
     if (showHelpDialog) {
         PagedReaderHelpDialog(onDismissRequest = { onShowHelpDialogChange(false) })
@@ -66,6 +70,14 @@ fun BoxScope.PagedReaderContent(
     val currentContainerSize = screenScaleState.areaSize.collectAsState().value
 
     val coroutineScope = rememberCoroutineScope()
+
+    val gestureActionHandler: (ReaderSwipeAction) -> Unit = { action ->
+        when (action) {
+            ReaderSwipeAction.NONE -> {}
+            ReaderSwipeAction.NEXT_PAGE -> coroutineScope.launch { pagedReaderState.nextPage() }
+            ReaderSwipeAction.PREVIOUS_PAGE -> coroutineScope.launch { pagedReaderState.previousPage() }
+        }
+    }
     ReaderControlsOverlay(
         readingDirection = layoutDirection,
         onNexPageClick = pagedReaderState::nextPage,
@@ -88,7 +100,12 @@ fun BoxScope.PagedReaderContent(
                 onMoveToPrevPage = { coroutineScope.launch { pagedReaderState.previousPage() } },
                 volumeKeysNavigation = volumeKeysNavigation
             )
-        }
+        }.readerSwipeGestures(
+            swipeActions = swipeActions,
+            onAction = gestureActionHandler,
+            enabled = !showSettingsMenu,
+            screenScaleState = screenScaleState,
+        )
     ) {
         ScalableContainer(scaleState = screenScaleState) {
             val transitionPage = pagedReaderState.transitionPage.collectAsState().value

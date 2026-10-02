@@ -45,6 +45,7 @@ import snd.komelia.ui.LocalPlatform
 import snd.komelia.ui.LocalWindowState
 import snd.komelia.ui.common.components.LoadingMaxSizeIndicator
 import snd.komelia.ui.platform.BackPressHandler
+import snd.komelia.ui.platform.HidePointerEffect
 import snd.komelia.ui.platform.PlatformType.MOBILE
 import snd.komelia.ui.reader.image.ReaderState
 import snd.komelia.ui.reader.image.ScreenScaleState
@@ -98,6 +99,9 @@ fun ReaderContent(
 
     val topLevelFocus = remember { FocusRequester() }
     val volumeKeysNavigation = commonReaderState.volumeKeysNavigation.collectAsState().value
+    val swipeActions = commonReaderState.swipeActions.collectAsState().value
+    HidePointerEffect(swipeActions.remoteButtonsEnabled)
+    val remoteCursor = rememberRemoteCursorState()
     var hasFocus by remember { mutableStateOf(false) }
 
     BackPressHandler { if (showSettingsMenu) showSettingsMenu = false else onExit() }
@@ -107,6 +111,7 @@ fun ReaderContent(
             .onSizeChanged {
                 screenScaleState.setAreaSize(it)
             }
+            .trackRemoteCursor(remoteCursor, enabled = swipeActions.remoteButtonsEnabled)
             .focusable()
             .focusRequester(topLevelFocus)
             .onFocusChanged { hasFocus = it.hasFocus }
@@ -126,6 +131,7 @@ fun ReaderContent(
                 consumed
             }
     ) {
+        RemoteCursorGestureExclusion(remoteCursor, enabled = swipeActions.remoteButtonsEnabled)
         val areaSize = screenScaleState.areaSize.collectAsState()
         if (areaSize.value == IntSize.Zero) {
             LoadingMaxSizeIndicator()
@@ -141,7 +147,8 @@ fun ReaderContent(
                     onShowSettingsMenuChange = { showSettingsMenu = it },
                     screenScaleState = screenScaleState,
                     pagedReaderState = pagedReaderState,
-                    volumeKeysNavigation = volumeKeysNavigation
+                    volumeKeysNavigation = volumeKeysNavigation,
+                    swipeActions = swipeActions,
                 )
             }
 
@@ -153,7 +160,8 @@ fun ReaderContent(
                     onShowSettingsMenuChange = { showSettingsMenu = it },
                     screenScaleState = screenScaleState,
                     continuousReaderState = continuousReaderState,
-                    volumeKeysNavigation = volumeKeysNavigation
+                    volumeKeysNavigation = volumeKeysNavigation,
+                    swipeActions = swipeActions,
                 )
             }
 
@@ -166,7 +174,8 @@ fun ReaderContent(
                     onShowSettingsMenuChange = { showSettingsMenu = it },
                     screenScaleState = screenScaleState,
                     panelsReaderState = panelsReaderState,
-                    volumeKeysNavigation = volumeKeysNavigation
+                    volumeKeysNavigation = volumeKeysNavigation,
+                    swipeActions = swipeActions,
                 )
             }
 

@@ -14,9 +14,13 @@ import io.github.snd_r.komelia.ui.komelia_ui.generated.resources.Res
 import io.github.snd_r.komelia.ui.komelia_ui.generated.resources.settings_image_clear_cache
 import io.github.snd_r.komelia.ui.komelia_ui.generated.resources.settings_image_volume_key_navigation
 import org.jetbrains.compose.resources.stringResource
+import snd.komelia.settings.model.ReaderSwipeAction
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.ui.LocalPlatform
 import snd.komelia.ui.common.components.SwitchWithLabel
+import snd.komelia.ui.platform.CapturedPointerGesture
 import snd.komelia.ui.platform.PlatformType
+import snd.komelia.ui.reader.image.common.RemoteButtonInput
 import snd.komelia.ui.settings.imagereader.onnxruntime.OnnxRuntimeSettingsContent
 import snd.komelia.ui.settings.imagereader.onnxruntime.OnnxRuntimeSettingsState
 import snd.komelia.ui.settings.imagereader.onnxruntime.isOnnxRuntimeSupported
@@ -28,6 +32,16 @@ fun ImageReaderSettingsContent(
 
     volumeKeysNavigation: Boolean,
     onVolumeKeysNavigationChange: (Boolean) -> Unit,
+
+    swipeActions: ReaderSwipeActions,
+    onSwipeActionsChange: (ReaderSwipeActions) -> Unit,
+    remoteButtonLearningStep: RemoteButtonLearningStep,
+    onStartRemoteButtonLearning: () -> Unit,
+    onCancelRemoteButtonLearning: () -> Unit,
+    onRemoteButtonInput: (RemoteButtonInput) -> Unit,
+    onRemoteButtonCapturedInput: (CapturedPointerGesture) -> Unit,
+    onRemoteButtonActionChosen: (ReaderSwipeAction) -> Unit,
+    onSkipRotatedRemoteButtonPress: () -> Unit,
 
     onCacheClear: () -> Unit,
     onnxRuntimeSettingsState: OnnxRuntimeSettingsState,
@@ -50,6 +64,24 @@ fun ImageReaderSettingsContent(
                 label = { Text(stringResource(Res.string.settings_image_volume_key_navigation)) },
             )
         }
+
+        SwipeNavigationSettings(
+            swipeActions = swipeActions,
+            onSwipeActionsChange = onSwipeActionsChange,
+        )
+        RemoteButtonSettings(
+            swipeActions = swipeActions,
+            onSwipeActionsChange = onSwipeActionsChange,
+            onLearnClick = onStartRemoteButtonLearning,
+        )
+        RemoteButtonLearningPage(
+            step = remoteButtonLearningStep,
+            onInput = onRemoteButtonInput,
+            onCapturedInput = onRemoteButtonCapturedInput,
+            onActionChosen = onRemoteButtonActionChosen,
+            onSkipRotation = onSkipRotatedRemoteButtonPress,
+            onCancel = onCancelRemoteButtonLearning,
+        )
 
         FilledTonalButton(
             onClick = onCacheClear,

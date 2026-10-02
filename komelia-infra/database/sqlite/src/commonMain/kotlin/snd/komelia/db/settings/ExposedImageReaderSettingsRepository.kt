@@ -2,6 +2,8 @@ package snd.komelia.db.settings
 
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -15,9 +17,12 @@ import snd.komelia.image.UpsamplingMode
 import snd.komelia.image.UpscaleMode
 import snd.komelia.settings.model.ContinuousReadingDirection
 import snd.komelia.settings.model.LayoutScaleType
+import snd.komelia.settings.model.LearnedRemoteButton
 import snd.komelia.settings.model.PageDisplayLayout
 import snd.komelia.settings.model.PagedReadingDirection
 import snd.komelia.settings.model.ReaderFlashColor
+import snd.komelia.settings.model.ReaderSwipeAction
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.settings.model.ReaderType
 
 class ExposedImageReaderSettingsRepository(database: Database) : ExposedRepository(database) {
@@ -48,6 +53,15 @@ class ExposedImageReaderSettingsRepository(database: Database) : ExposedReposito
                         upsamplingMode = UpsamplingMode.valueOf(it[ImageReaderSettingsTable.upsamplingMode]),
                         loadThumbnailPreviews = it[ImageReaderSettingsTable.loadThumbnailPreviews],
                         volumeKeysNavigation = it[ImageReaderSettingsTable.volumeKeysNavigation],
+                        swipeActions = ReaderSwipeActions(
+                            swipeLeft = ReaderSwipeAction.valueOf(it[ImageReaderSettingsTable.swipeLeft]),
+                            swipeRight = ReaderSwipeAction.valueOf(it[ImageReaderSettingsTable.swipeRight]),
+                            swipeUp = ReaderSwipeAction.valueOf(it[ImageReaderSettingsTable.swipeUp]),
+                            swipeDown = ReaderSwipeAction.valueOf(it[ImageReaderSettingsTable.swipeDown]),
+                            learnedRemoteButtons = decodeRemoteButtons(
+                                it[ImageReaderSettingsTable.learnedRemoteButtons]
+                            ),
+                        ),
                         ortUpscalerMode = UpscaleMode.valueOf(it[ImageReaderSettingsTable.ortUpscalerMode]),
                         ortUpscalerUserModelPath = it[ImageReaderSettingsTable.ortUpscalerUserModelPath]
                             ?.let { PlatformFile(it) },
@@ -79,6 +93,14 @@ class ExposedImageReaderSettingsRepository(database: Database) : ExposedReposito
                 it[linearLightDownsampling] = settings.linearLightDownsampling
                 it[loadThumbnailPreviews] = settings.loadThumbnailPreviews
                 it[volumeKeysNavigation] = settings.volumeKeysNavigation
+                it[swipeLeft] = settings.swipeActions.swipeLeft.name
+                it[swipeRight] = settings.swipeActions.swipeRight.name
+                it[swipeUp] = settings.swipeActions.swipeUp.name
+                it[swipeDown] = settings.swipeActions.swipeDown.name
+                it[learnedRemoteButtons] = json.encodeToString(
+                    remoteButtonsSerializer,
+                    settings.swipeActions.learnedRemoteButtons
+                )
                 it[upsamplingMode] = settings.upsamplingMode.name
                 it[ortUpscalerMode] = settings.ortUpscalerMode.name
                 it[ortUpscalerUserModelPath] = settings.ortUpscalerUserModelPath?.path
@@ -86,5 +108,12 @@ class ExposedImageReaderSettingsRepository(database: Database) : ExposedReposito
                 it[ortUpscalerTileSize] = settings.ortUpscalerTileSize
             }
         }
+    }
+
+    private val json = Json { ignoreUnknownKeys = true }
+    private val remoteButtonsSerializer = ListSerializer(LearnedRemoteButton.serializer())
+
+    private fun decodeRemoteButtons(value: String): List<LearnedRemoteButton> {
+        return runCatching { json.decodeFromString(remoteButtonsSerializer, value) }.getOrDefault(emptyList())
     }
 }

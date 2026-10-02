@@ -1,0 +1,5 @@
+ALTER TABLE ImageReaderSettings ADD COLUMN swipe_left TEXT NOT NULL DEFAULT 'NONE';
+ALTER TABLE ImageReaderSettings ADD COLUMN swipe_right TEXT NOT NULL DEFAULT 'NONE';
+ALTER TABLE ImageReaderSettings ADD COLUMN swipe_up TEXT NOT NULL DEFAULT 'NONE';
+ALTER TABLE ImageReaderSettings ADD COLUMN swipe_down TEXT NOT NULL DEFAULT 'NONE';
+ALTER TABLE ImageReaderSettings ADD COLUMN learned_remote_buttons TEXT NOT NULL DEFAULT '[]';

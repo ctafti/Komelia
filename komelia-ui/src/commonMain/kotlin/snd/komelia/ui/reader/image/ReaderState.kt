@@ -28,6 +28,7 @@ import snd.komelia.komga.api.model.KomeliaBook
 import snd.komelia.komga.api.model.KomeliaSeries
 import snd.komelia.settings.ImageReaderSettingsRepository
 import snd.komelia.settings.model.ReaderFlashColor
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.settings.model.ReaderType
 import snd.komelia.ui.BookSiblingsContext
 import snd.komelia.ui.LoadState
@@ -81,6 +82,7 @@ class ReaderState(
     val flashWith = MutableStateFlow(ReaderFlashColor.BLACK)
 
     val volumeKeysNavigation = MutableStateFlow(false)
+    val swipeActions = MutableStateFlow(ReaderSwipeActions())
     val pixelDensity = MutableStateFlow<Density?>(null)
 
     suspend fun initialize(bookId: KomgaBookId) {
@@ -95,6 +97,7 @@ class ReaderState(
         flashEveryNPages.value = readerSettingsRepository.getFlashEveryNPages().first()
         flashWith.value = readerSettingsRepository.getFlashWith().first()
         volumeKeysNavigation.value = readerSettingsRepository.getVolumeKeysNavigation().first()
+        swipeActions.value = readerSettingsRepository.getSwipeActions().first()
 
         appNotifications.runCatchingToNotifications {
             state.value = LoadState.Loading

@@ -3,6 +3,7 @@ package snd.komelia.ui.reader.epub
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cafe.adriel.voyager.navigator.Navigator
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import snd.komelia.AppNotifications
@@ -14,11 +15,15 @@ import snd.komelia.komga.api.KomgaSeriesApi
 import snd.komelia.komga.api.model.KomeliaBook
 import snd.komelia.settings.CommonSettingsRepository
 import snd.komelia.settings.EpubReaderSettingsRepository
+import snd.komelia.settings.ImageReaderSettingsRepository
 import snd.komelia.settings.model.EpubReaderType.KOMGA_EPUB
 import snd.komelia.settings.model.EpubReaderType.TTSU_EPUB
+import snd.komelia.settings.model.ReaderSwipeAction
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.ui.BookSiblingsContext
 import snd.komelia.ui.LoadState
 import snd.komelia.ui.platform.PlatformType
+import snd.komelia.ui.reader.image.common.ReaderScrollAxis
 import snd.komga.client.book.KomgaBookId
 import snd.webview.KomeliaWebview
 
@@ -36,7 +41,11 @@ class EpubReaderViewModel(
     private val windowState: AppWindowState,
     private val platformType: PlatformType,
     private val bookSiblingsContext: BookSiblingsContext,
+    imageReaderSettingsRepository: ImageReaderSettingsRepository,
 ) : StateScreenModel<LoadState<EpubReaderState>>(LoadState.Uninitialized) {
+
+    /** Swipe navigation and learned remote buttons (shared with the comic reader settings). */
+    val swipeActions: Flow<ReaderSwipeActions> = imageReaderSettingsRepository.getSwipeActions()
 
     suspend fun initialize(navigator: Navigator) {
         when (val state = state.value) {
@@ -104,4 +113,10 @@ interface EpubReaderState {
     fun onWebviewCreated(webview: KomeliaWebview)
     fun onBackButtonPress()
     fun closeWebview()
+
+    /** Scroll direction reported by the web reader; swipes along it are left to the reader. */
+    val scrollAxis: StateFlow<ReaderScrollAxis?>
+
+    /** Turns the page for a swipe or learned remote button. */
+    fun turnPage(action: ReaderSwipeAction)
 }

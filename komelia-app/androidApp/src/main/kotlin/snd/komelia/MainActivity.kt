@@ -4,15 +4,17 @@ import android.app.Activity
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.webkit.WebView
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toComposeRect
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
@@ -62,16 +64,24 @@ class MainActivity : AppCompatActivity() {
             window.isNavigationBarContrastEnforced = false
         }
 
-        setContent {
-            val windowSize = rememberWindowSize()
-            MainView(
-                dependencies = dependencies.collectAsState().value,
-                windowWidth = WindowSizeClass.fromDp(windowSize.width),
-                windowHeight = WindowSizeClass.fromDp(windowSize.height),
-                platformType = PlatformType.MOBILE,
-                keyEvents = MutableSharedFlow()
-            )
+        val composeView = ComposeView(this).apply {
+            setContent {
+                val windowSize = rememberWindowSize()
+                MainView(
+                    dependencies = dependencies.collectAsState().value,
+                    windowWidth = WindowSizeClass.fromDp(windowSize.width),
+                    windowHeight = WindowSizeClass.fromDp(windowSize.height),
+                    platformType = PlatformType.MOBILE,
+                    keyEvents = MutableSharedFlow()
+                )
+            }
         }
+        // Wrapped for app-wide pointer handling (see PointerInputRootLayout)
+        setContentView(
+            PointerInputRootLayout(this).apply {
+                addView(composeView, ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            }
+        )
     }
 }
 

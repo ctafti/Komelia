@@ -91,6 +91,7 @@
   import {dummyFn, isMobile, isMobile$} from '$lib/functions/utils';
   import {onKeydownReader} from '../../on-keydown-reader';
   import {onDestroy, onMount, tick} from 'svelte';
+  import {reportKomeliaScrollAxis, startKomeliaPageTurns} from '$lib/komelia-navigation';
   import {
     clearRange,
     getParagraphToPoint,
@@ -340,9 +341,19 @@
     document.dispatchEvent(new CustomEvent(SKIPKEYLISTENER, {detail: $skipKeyDownListener$}))
   });
 
+  // Komelia swipe navigation and remote buttons
+  let stopKomeliaPageTurns: (() => void) | undefined;
+  $effect(() => {
+    const paginated = $viewMode$ === ViewMode.Paginated;
+    reportKomeliaScrollAxis(paginated ? 'none' : $verticalMode$ ? 'horizontal' : 'vertical');
+  });
+
   onMount(() => {
     // settings = await SettingsStore.getSettingsStore();
     document.addEventListener('ttu-action', handleAction, false)
+    stopKomeliaPageTurns = startKomeliaPageTurns(() =>
+      pageManager ? {nextPage: () => pageManager?.nextPage(), previousPage: () => pageManager?.prevPage()} : undefined
+    );
   });
 
   function handleAction({detail}: any) {
@@ -357,6 +368,7 @@
   /** Experimental Code - May be removed any time without warning */
 
   onDestroy(() => {
+    stopKomeliaPageTurns?.();
     document.removeEventListener('ttu-action', handleAction, false);
 
     readerImageGalleryPictures$.next([]);

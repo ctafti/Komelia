@@ -34,6 +34,7 @@ import snd.komelia.komga.api.model.KomeliaBook
 import snd.komelia.resolve
 import snd.komelia.settings.CommonSettingsRepository
 import snd.komelia.settings.EpubReaderSettingsRepository
+import snd.komelia.settings.model.ReaderSwipeAction
 import snd.komelia.settings.model.TtsuReaderSettings
 import snd.komelia.settings.model.TtsuUserFont
 import snd.komelia.ui.BookSiblingsContext
@@ -81,6 +82,8 @@ class TtsuReaderState(
 
     val bookId = MutableStateFlow(bookId)
     private val webview = MutableStateFlow<KomeliaWebview?>(null)
+    private val navigationBridge = EpubNavigationBridge()
+    override val scrollAxis = navigationBridge.scrollAxis
     private val epubLoadTask = CompletableDeferred<TtuEpubData>()
     private val availableSystemFonts = MutableStateFlow<List<String>>(emptyList())
     private val selectedFontFile = MutableStateFlow<PlatformFile?>(null)
@@ -121,7 +124,10 @@ class TtsuReaderState(
         closeWebview()
     }
 
+    override fun turnPage(action: ReaderSwipeAction) = navigationBridge.turnPage(action)
+
     override fun closeWebview() {
+        navigationBridge.close()
         webview.value?.close()
         if (platformType == PlatformType.MOBILE) windowState.setFullscreen(false)
 
@@ -168,6 +174,7 @@ class TtsuReaderState(
         webview.bind<TtuBookmarkData, Unit>("putBookmark") { putBookmark(it) }
 
         webview.bind<Unit, Unit>("closeBook") { closeWebview() }
+        navigationBridge.bindTo(webview)
 
         webview.bind<Unit, List<String>>("getAvailableFonts") {
             availableSystemFonts.value

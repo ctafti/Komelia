@@ -53,12 +53,16 @@ import snd.komelia.image.ReaderImageResult
 import snd.komelia.settings.model.ContinuousReadingDirection.LEFT_TO_RIGHT
 import snd.komelia.settings.model.ContinuousReadingDirection.RIGHT_TO_LEFT
 import snd.komelia.settings.model.ContinuousReadingDirection.TOP_TO_BOTTOM
+import snd.komelia.settings.model.ReaderSwipeAction
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.ui.reader.image.PageMetadata
 import snd.komelia.ui.reader.image.ScreenScaleState
 import snd.komelia.ui.reader.image.common.ContinuousReaderHelpDialog
 import snd.komelia.ui.reader.image.common.ReaderControlsOverlay
 import snd.komelia.ui.reader.image.common.ReaderImageContent
+import snd.komelia.ui.reader.image.common.ReaderScrollAxis
 import snd.komelia.ui.reader.image.common.ScalableContainer
+import snd.komelia.ui.reader.image.common.readerSwipeGestures
 import snd.komelia.ui.reader.image.continuous.ContinuousReaderState.BookPagesInterval
 
 @Composable
@@ -69,7 +73,8 @@ fun BoxScope.ContinuousReaderContent(
     onShowSettingsMenuChange: (Boolean) -> Unit,
     screenScaleState: ScreenScaleState,
     continuousReaderState: ContinuousReaderState,
-    volumeKeysNavigation: Boolean
+    volumeKeysNavigation: Boolean,
+    swipeActions: ReaderSwipeActions = ReaderSwipeActions(),
 ) {
     val coroutineScope = rememberCoroutineScope()
     val readingDirection = continuousReaderState.readingDirection.collectAsState().value
@@ -101,6 +106,17 @@ fun BoxScope.ContinuousReaderContent(
             scrollToLastPage = { coroutineScope.launch { continuousReaderState.scrollToLastPage() } },
             changeReadingDirection = continuousReaderState::onReadingDirectionChange
         )
+    }
+    val gestureActionHandler: (ReaderSwipeAction) -> Unit = { action ->
+        when (action) {
+            ReaderSwipeAction.NONE -> {}
+            ReaderSwipeAction.NEXT_PAGE -> coroutineScope.launch { continuousReaderState.scrollScreenForward() }
+            ReaderSwipeAction.PREVIOUS_PAGE -> coroutineScope.launch { continuousReaderState.scrollScreenBackward() }
+        }
+    }
+    val scrollAxis = when (readingDirection) {
+        TOP_TO_BOTTOM -> ReaderScrollAxis.VERTICAL
+        LEFT_TO_RIGHT, RIGHT_TO_LEFT -> ReaderScrollAxis.HORIZONTAL
     }
     ReaderControlsOverlay(
         readingDirection = layoutDirection,
@@ -144,7 +160,13 @@ fun BoxScope.ContinuousReaderContent(
             }
 
             consumed
-        }
+        }.readerSwipeGestures(
+            swipeActions = swipeActions,
+            onAction = gestureActionHandler,
+            enabled = !showSettingsMenu,
+            screenScaleState = screenScaleState,
+            scrollAxis = scrollAxis,
+        )
     ) {
         ScalableContainer(continuousReaderState.screenScaleState) {
             ReaderPages(state = continuousReaderState)

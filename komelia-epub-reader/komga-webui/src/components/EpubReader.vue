@@ -322,7 +322,8 @@
 
 <script setup lang="ts">
 import {useI18n} from 'vue-i18n'
-import {computed, ComputedRef, onBeforeUnmount, onMounted, reactive, Ref, ref} from 'vue'
+import {computed, ComputedRef, onBeforeUnmount, onMounted, reactive, Ref, ref, watch} from 'vue'
+import {reportKomeliaScrollAxis, startKomeliaPageTurns} from '../komelia-navigation'
 import D2Reader, {Locator, ReadingPosition} from '@d-i-t-a/reader'
 import {Locations} from "@d-i-t-a/reader/dist/types/model/Locator";
 import {BookDto} from '@/types/komga-books'
@@ -726,11 +727,21 @@ const navigationMode = computed({
 })
 
 
+// Komelia swipe navigation and remote buttons
+let stopKomeliaPageTurns: (() => void) | undefined
+watch(verticalScroll, (vertical) => reportKomeliaScrollAxis(vertical ? 'vertical' : 'none'), {immediate: true})
+
 onBeforeUnmount(() => {
+  stopKomeliaPageTurns?.()
   d2Reader.value.stop()
 })
 
 onMounted(async () => {
+  stopKomeliaPageTurns = startKomeliaPageTurns(() => {
+    const reader = d2Reader.value as any
+    if (typeof reader?.nextPage !== 'function') return undefined
+    return {nextPage: () => reader.nextPage(), previousPage: () => reader.previousPage()}
+  })
   let bookId = await externalFunctions.getInitialBookId()
   let externalSettings = await externalFunctions.getReaderSettings()
   fullscreenIsAvailable.value = await externalFunctions.isFullscreenAvailable()

@@ -22,6 +22,7 @@ import snd.komelia.komga.api.KomgaSeriesApi
 import snd.komelia.komga.api.model.KomeliaBook
 import snd.komelia.settings.CommonSettingsRepository
 import snd.komelia.settings.EpubReaderSettingsRepository
+import snd.komelia.settings.model.ReaderSwipeAction
 import snd.komelia.ui.BookSiblingsContext
 import snd.komelia.ui.LoadState
 import snd.komelia.ui.LoadState.Uninitialized
@@ -60,6 +61,8 @@ class KomgaEpubReaderState(
 
     val bookId = MutableStateFlow(bookId)
     private val webview = MutableStateFlow<KomeliaWebview?>(null)
+    private val navigationBridge = EpubNavigationBridge()
+    override val scrollAxis = navigationBridge.scrollAxis
     private val navigator = MutableStateFlow<Navigator?>(null)
 
     override suspend fun initialize(navigator: Navigator) {
@@ -86,7 +89,10 @@ class KomgaEpubReaderState(
         closeWebview()
     }
 
+    override fun turnPage(action: ReaderSwipeAction) = navigationBridge.turnPage(action)
+
     override fun closeWebview() {
+        navigationBridge.close()
         webview.value?.close()
         if (platformType == PlatformType.MOBILE) windowState.setFullscreen(false)
         navigator.value?.let { nav ->
@@ -157,6 +163,7 @@ class KomgaEpubReaderState(
         }
 
         webview.bind<Unit, Unit>("closeBook") { closeWebview() }
+        navigationBridge.bindTo(webview)
 
         webview.bind<Unit, String>("getServerUrl") {
             settingsRepository.getServerUrl().first()

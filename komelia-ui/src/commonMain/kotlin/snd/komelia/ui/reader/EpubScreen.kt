@@ -1,15 +1,19 @@
 package snd.komelia.ui.reader
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import snd.komelia.komga.api.model.KomeliaBook
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.ui.BookSiblingsContext
 import snd.komelia.ui.LoadState
 import snd.komelia.ui.LocalViewModelFactory
@@ -19,9 +23,14 @@ import snd.komelia.ui.book.BookScreen
 import snd.komelia.ui.book.bookScreen
 import snd.komelia.ui.common.components.ErrorContent
 import snd.komelia.ui.common.components.LoadingMaxSizeIndicator
+import snd.komelia.ui.platform.HidePointerEffect
 import snd.komelia.ui.platform.PlatformTitleBar
 import snd.komelia.ui.platform.canIntegrateWithSystemBar
 import snd.komelia.ui.reader.epub.EpubContent
+import snd.komelia.ui.reader.image.common.RemoteCursorGestureExclusion
+import snd.komelia.ui.reader.image.common.readerSwipeGestures
+import snd.komelia.ui.reader.image.common.rememberRemoteCursorState
+import snd.komelia.ui.reader.image.common.trackRemoteCursor
 import snd.komga.client.book.KomgaBookId
 import snd.komga.client.book.MediaProfile
 import kotlin.jvm.Transient
@@ -85,10 +94,29 @@ class EpubScreen(
                     }
                 )
 
-                is LoadState.Success -> EpubContent(
-                    onWebviewCreated = { state.value.onWebviewCreated(it) },
-                    onBackButtonPress = state.value::onBackButtonPress
-                )
+                is LoadState.Success -> {
+                    val readerState = state.value
+                    val swipeActions = vm.swipeActions.collectAsState(ReaderSwipeActions()).value
+                    val scrollAxis = readerState.scrollAxis.collectAsState().value
+                    HidePointerEffect(swipeActions.remoteButtonsEnabled)
+                    val remoteCursor = rememberRemoteCursorState()
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .trackRemoteCursor(remoteCursor, enabled = swipeActions.remoteButtonsEnabled)
+                            .readerSwipeGestures(
+                                swipeActions = swipeActions,
+                                onAction = readerState::turnPage,
+                                scrollAxis = scrollAxis,
+                            )
+                    ) {
+                        EpubContent(
+                            onWebviewCreated = { readerState.onWebviewCreated(it) },
+                            onBackButtonPress = readerState::onBackButtonPress
+                        )
+                        RemoteCursorGestureExclusion(remoteCursor, enabled = swipeActions.remoteButtonsEnabled)
+                    }
+                }
             }
         }
     }

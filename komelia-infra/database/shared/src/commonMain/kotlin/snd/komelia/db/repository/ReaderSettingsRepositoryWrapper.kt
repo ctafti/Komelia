@@ -13,6 +13,7 @@ import snd.komelia.settings.model.LayoutScaleType
 import snd.komelia.settings.model.PageDisplayLayout
 import snd.komelia.settings.model.PagedReadingDirection
 import snd.komelia.settings.model.ReaderFlashColor
+import snd.komelia.settings.model.ReaderSwipeActions
 import snd.komelia.settings.model.ReaderType
 
 class ReaderSettingsRepositoryWrapper(
@@ -161,6 +162,14 @@ class ReaderSettingsRepositoryWrapper(
 
     override suspend fun putVolumeKeysNavigation(enable: Boolean) {
         wrapper.transform { it.copy(volumeKeysNavigation = enable) }
+    }
+
+    override fun getSwipeActions(): Flow<ReaderSwipeActions> {
+        return wrapper.mapState { it.swipeActions }
+    }
+
+    override suspend fun putSwipeActions(actions: ReaderSwipeActions) {
+        wrapper.transform { it.copy(swipeActions = actions) }
     }
 
     override fun getUpscalerMode(): Flow<UpscaleMode> {
